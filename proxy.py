@@ -25,24 +25,6 @@ def start_local_server(model_filename):
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
-@app.route('/set_target', methods=['POST'])
-async def set_target(request: Request):
-    global state
-    response = await request.json()
-    target = response['target']
-    if target not in config.models:
-        raise exceptions.HTTPException(
-            status_code=400, detail=f'Invalid target: {target}')
-
-    state = config.models[target]
-    if config.models[target].get("type") == "local":
-        start_local_server(os.path.join(
-            config.model_folder, config.models[target]['filename']))
-
-    message = f'Target set to {state}'
-    return responses.JSONResponse({'message': message}, status_code=200)
-
-
 @app.route('/{path:path}', methods=['GET', 'POST', 'PUT', 'DELETE'])
 async def proxy(request: Request):
     global state
@@ -85,5 +67,10 @@ async def server_error(request, exc):
     return responses.JSONResponse({"error": "Server error"}, status_code=500)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--model')
+    args = parser.parse_args()
+    
+    start_local_server(args.model)
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=5001)
