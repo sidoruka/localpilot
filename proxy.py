@@ -1,14 +1,11 @@
-import config
 import httpx
 import os
 import subprocess
 import logging
 from starlette import applications, responses, exceptions
 from starlette.requests import Request
-import config
 
 app = applications.Starlette()
-state = config.models[config.models['default']]
 local_server_process = None
 logging.basicConfig(level=logging.DEBUG)
 
@@ -27,14 +24,8 @@ def start_local_server(model_filename):
 
 @app.route('/{path:path}', methods=['GET', 'POST', 'PUT', 'DELETE'])
 async def proxy(request: Request):
-    global state
     path = request.url.path
-    logging.debug(f'Current state: {state}')
-
-    if state['type'] == 'remote':
-        url = f"{state['domain']}{path}"
-    elif state['type'] == 'local':
-        url = f"http://localhost:8000{path}"
+    url = f"http://localhost:8000{path}"
 
     data = await request.body()
     headers = dict(request.headers)
